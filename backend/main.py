@@ -8,7 +8,7 @@ import asyncio
 from collections import deque
 from datetime import datetime
 
-app = FastAPI(title="linscope", version="0.1.0")
+app = FastAPI(title="linscope", version="0.2.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -108,7 +108,7 @@ async def root():
     return {
         "status": "linscope running 🔭",
         "events": len(event_store),
-        "version": "0.2.0-optimized"
+        "version": "0.2.0"
     }
 
 @app.post("/api/events/batch")
