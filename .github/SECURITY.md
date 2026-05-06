@@ -4,7 +4,8 @@
 
 | Version | Supported | Security Updates |
 |---------|-----------|------------------|
-| v0.1.x (alpha) | ✅ | Critical fixes only |
+| v0.2.0+ (optimized) | ✅ | Full support |
+| v0.1.x (alpha) | ⚠️ | Critical fixes only |
 | main branch | ✅ | Latest security patches |
 
 ## 🚨 Reporting a Vulnerability
@@ -47,5 +48,8 @@ Please DO:
 
 ## 🛡️ Best Practices
 - Run collector with sudo only
-- Keep backend on localhost
-- Linux kernel 5.4+
+- Keep backend on localhost (or use SSL/TLS for production)
+- Linux kernel 5.4+ (eBPF support)
+- Use v0.2.0+ for production (better performance & stability)
+- Keep dependencies updated
+- Monitor performance metrics in dashboard

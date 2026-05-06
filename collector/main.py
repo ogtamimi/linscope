@@ -6,6 +6,15 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from src.process_monitor import ProcessMonitor
 from src.event_emitter import EventEmitter
 
+# Try to import network monitor, fallback if not available
+try:
+    from src.network_monitor_v2 import NetworkMonitorV2
+    HAS_NETWORK = True
+    print("[linscope] Network monitor available")
+except ImportError:
+    HAS_NETWORK = False
+    print("[linscope] Network monitor disabled (using process only)")
+
 def main():
     if os.geteuid() != 0:
         print("❌ Requires root: sudo python3 main.py")
@@ -18,7 +27,7 @@ def main():
     ██║     ██║██║╚██╗██║╚════██║██║     ██║   ██║██╔═══╝ ██╔══╝
     ███████╗██║██║ ╚████║███████║╚██████╗╚██████╔╝██║     ███████╗
     ╚══════╝╚═╝╚═╝  ╚═══╝╚══════╝ ╚═════╝ ╚═════╝ ╚═╝     ╚══════╝
-    v0.1.0 — Process Monitor Only
+    v0.2.0 — Phase 1: Process Monitoring
     """)
 
     emitter = EventEmitter()
@@ -32,11 +41,20 @@ def main():
     signal.signal(signal.SIGINT, shutdown)
     signal.signal(signal.SIGTERM, shutdown)
 
-    # Process monitor only (network monitor disabled for kernel 6.17)
+    # Process monitor only
     t1 = threading.Thread(target=ProcessMonitor(emitter.emit).start, daemon=True)
     t1.start()
     
-    print("[linscope] Process monitor running. Ctrl+C to stop.\n")
+    # Network monitor if available
+    if HAS_NETWORK:
+        net_mon = NetworkMonitorV2(emitter.emit)
+        t2 = threading.Thread(target=net_mon.start, daemon=True)
+        t2.start()
+        print("[linscope] Process + Network monitors running")
+    else:
+        print("[linscope] Process monitor running (network disabled)")
+    
+    print("Ctrl+C to stop.\n")
     t1.join()
 
 if __name__ == "__main__":
