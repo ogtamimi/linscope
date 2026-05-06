@@ -96,15 +96,15 @@ http://localhost:5173
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│  🔭 LINSCOPE                                    processes 42   │
-│  v0.1.0 — behavioral observability             connections 15  │
+│  🔭 LINSCOPE                                    processes 42    │
+│  v0.1.0 — behavioral observability             connections 15   │
 │                                                   events/s 127  │
-├──────────────┬─────────────────────────────────┬───────────────┤
-│  Live Graph  │      ●    ●                     │  LIVE EVENTS  │
-│  Network Map │        ●       ●                │  exec bash    │
-│  Timeline    │    ●         ●                  │  connect curl │
-│  Incidents   │          ●                      │  exec python3 │
-│  AI Analyst  │       ●    ●                    │  connect wget │
+├──────────────┬─────────────────────────────────┬────────────────┤
+│  Live Graph  │      ●    ●                     │  LIVE EVENTS   │
+│  Network Map │        ●       ●                │  exec bash     │
+│  Timeline    │    ●         ●                  │  connect curl  │
+│  Incidents   │          ●                      │  exec python3  │
+│  AI Analyst  │       ●    ●                    │  connect wget  │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -127,14 +127,18 @@ http://localhost:5173
 
 ## 🗺️ Roadmap
 
+- Project structure & GitHub setup
 - eBPF process collector
-- FastAPI backend + WebSocket
-- React frontend live graph
+- FastAPI backend with WebSocket
+- React frontend with live graph
 - Mock collector for demo
-- Network monitor fix (kernel 6.17+)
+- Network monitor (kernel 6.17+ fix)
 - Behavioral detection engine
 - Attack timeline reconstruction
 - Ollama AI integration
+- Incident summarization
+
+
 
 ---
 
@@ -163,28 +167,46 @@ http://localhost:5173
 ```
 linscope/
 ├── collector/
+│   ├── src/
+│   │   ├── process_monitor.py   # eBPF process tracking
+│   │   ├── network_monitor.py   # eBPF network tracking
+│   │   └── event_emitter.py     # HTTP event sender
+│   ├── main.py                   # Real eBPF collector
+│   └── mock_collector.py         # Demo collector (no root)
 ├── backend/
+│   └── main.py                   # FastAPI + WebSocket server
 ├── frontend/
+│   ├── src/
+│   │   ├── components/           # React components
+│   │   ├── hooks/                # Custom hooks (WebSocket)
+│   │   └── types/                # TypeScript types
+│   └── package.json
 ├── scripts/
+│   └── install.sh                # Installation script
 ├── docs/
-└── README.md
+├── README.md
+└── LICENSE
 ```
 
 ---
 
 ## 🤝 Contributing
 
-1. Fork repo  
-2. Create branch  
-3. Commit changes  
-4. Push branch  
-5. Open PR  
+1. Fork the repository
+
+1. Create your feature branch (git checkout -b feature/amazing)
+
+1. Commit your changes (git commit -m 'Add amazing feature')
+
+1. Push to the branch (git push origin feature/amazing)
+
+1. Open a Pull Request 
 
 ---
 
 ## 📝 License
 
-Apache 2.0 License
+Apache 2.0 License - see LICENSE file for details.
 
 ---
 
