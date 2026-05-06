@@ -135,7 +135,7 @@ http://localhost:5173
 │  Timeline    │    ●         ●                  │  connect curl  │
 │  Incidents   │          ●                      │  exec python3  │
 │  AI Analyst  │       ●    ●                    │  connect wget  │
-│  📊 METRICS  │ FPS: 52 | Events: 1250/s       │  [Auto scroll] │
+│  📊 METRICS  │ FPS: 52 | Events: 1250/s       │  [Auto scroll]  │
 └──────────────┴─────────────────────────────────┴────────────────┘
 ```
 
@@ -173,24 +173,6 @@ http://localhost:5173
 
 
 
----
-
-## � Documentation
-
-### Performance Optimization Guides (v0.2.0)
-
-| Guide | Purpose | Length |
-|-------|---------|--------|
-| [**QUICK_REFERENCE.md**](QUICK_REFERENCE.md) | 5-minute quick start | 300 lines |
-| [**OPTIMIZATION_GUIDE.md**](OPTIMIZATION_GUIDE.md) | Complete setup, tuning, troubleshooting | 650 lines |
-| [**MIGRATION_GUIDE.md**](MIGRATION_GUIDE.md) | Developer migration from old components | 450 lines |
-| [**BEFORE_AFTER_COMPARISON.md**](BEFORE_AFTER_COMPARISON.md) | Side-by-side code comparison & improvements | 400 lines |
-| [**IMPLEMENTATION_SUMMARY.md**](IMPLEMENTATION_SUMMARY.md) | Technical implementation details | 350 lines |
-| [**DELIVERY_SUMMARY.md**](DELIVERY_SUMMARY.md) | Complete delivery overview | 200 lines |
-
-**Start with:** [QUICK_REFERENCE.md](QUICK_REFERENCE.md) for a 5-minute overview
-
----
 
 ## 🚀 What's New in v0.2.0
 
@@ -287,12 +269,7 @@ linscope/
 ├── docs/
 ├── scripts/
 │   └── install.sh
-├── QUICK_REFERENCE.md              # ✨ 5-minute start guide
-├── OPTIMIZATION_GUIDE.md            # ✨ Complete setup & tuning
-├── MIGRATION_GUIDE.md               # ✨ Developer migration
-├── BEFORE_AFTER_COMPARISON.md       # ✨ Code comparison
-├── IMPLEMENTATION_SUMMARY.md        # ✨ Technical overview
-├── DELIVERY_SUMMARY.md              # ✨ Complete delivery info
+|
 ├── README.md
 └── LICENSE
 ```
@@ -319,7 +296,7 @@ python3 collector/mock_collector.py --rate 2000
 
 | Metric | Expected | Status |
 |--------|----------|--------|
-| **FPS** | 45-60 | ✅ Stable |
+| **FPS** | over 30FPS | ✅ Stable |
 | **Memory** | <100MB | ✅ Efficient |
 | **Events/sec** | 2000+ | ✅ High-throughput |
 | **Render Time** | 2-8ms | ✅ Fast |
