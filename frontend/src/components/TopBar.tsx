@@ -3,42 +3,51 @@ interface Props {
   netCount: number
   eps: number
   connected: boolean 
+  quality?: string
+  onQualityChange?: (q: string) => void
 }
 
-function MetricCard({ label, value, color, icon }: { label: string; value: number; color: string; icon: string }) {
+function Pill({ color, label, value }: { color: string; label: string; value: number }) {
+  const dot: Record<string,string> = {
+    green: 'bg-green-400',
+    blue: 'bg-blue-400',
+    amber: 'bg-yellow-400'
+  }
   return (
-    <div className="group relative overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-500" />
-      <div className="relative flex items-center gap-3 bg-gray-900/50 backdrop-blur-sm border border-white/10 rounded-xl px-4 py-2.5 hover:border-white/20 transition-all">
-        <div className={`w-8 h-8 rounded-lg bg-${color}-500/10 flex items-center justify-center`}>
-          <span className="text-lg">{icon}</span>
-        </div>
-        <div>
-          <div className="text-2xl font-bold text-white tabular-nums">{value.toLocaleString()}</div>
-          <div className="text-[9px] text-gray-500 uppercase tracking-wider">{label}</div>
-        </div>
-      </div>
+    <div className="flex items-center gap-2 bg-gray-900 border border-gray-800 rounded-full px-3 py-1">
+      <span className={`w-1.5 h-1.5 rounded-full ${dot[color]}`} />
+      <span className="text-[11px] font-mono">
+        <span className="text-gray-200 font-semibold">{value}</span>
+        <span className="text-gray-500 ml-1">{label}</span>
+      </span>
     </div>
   )
 }
 
-export function TopBar({ procCount, netCount, eps, connected }: Props) {
+export function TopBar({ procCount, netCount, eps, connected, quality = 'high', onQualityChange }: Props) {
   return (
-    <div className="h-16 bg-[#0d1117]/80 backdrop-blur-xl border-b border-white/5 flex items-center px-6 gap-4 shrink-0">
-      <MetricCard label="PROCESSES" value={procCount} color="green" icon="⚙️" />
-      <MetricCard label="CONNECTIONS" value={netCount} color="blue" icon="🌐" />
-      <MetricCard label="EVENTS/S" value={eps} color="yellow" icon="⚡" />
+    <div className="h-12 bg-[#161b22] border-b border-gray-800 flex items-center px-5 gap-4 shrink-0">
+      <Pill color="green" label="processes" value={procCount} />
+      <Pill color="blue" label="connections" value={netCount} />
+      <Pill color="amber" label="events/s" value={eps} />
       
-      <div className="ml-auto flex items-center gap-4">
-        <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-900/50 rounded-full border border-white/5">
-          <div className={`w-2 h-2 rounded-full ${connected ? 'bg-green-500 animate-pulse shadow-lg shadow-green-500/50' : 'bg-red-500'}`} />
-          <span className="text-[10px] text-gray-400 font-mono">
-            {connected ? 'LIVE STREAMING' : 'DISCONNECTED'}
-          </span>
-        </div>
-        <div className="text-[10px] text-gray-600 font-mono">
-          {new Date().toLocaleTimeString()}
-        </div>
+      {onQualityChange && (
+        <select 
+          value={quality} 
+          onChange={(e) => onQualityChange(e.target.value)}
+          className="ml-2 bg-gray-800 text-[10px] rounded px-2 py-1 border border-gray-700"
+        >
+          <option value="high">High Quality</option>
+          <option value="medium">Medium</option>
+          <option value="low">Low (Performance)</option>
+        </select>
+      )}
+      
+      <div className="ml-auto flex items-center gap-3">
+        <span className={`w-2 h-2 rounded-full ${connected ? 'bg-green-400 animate-pulse' : 'bg-red-500'}`} />
+        <span className="text-[10px] text-gray-500 font-mono">
+          {connected ? 'backend connected' : 'connecting...'}
+        </span>
       </div>
     </div>
   )

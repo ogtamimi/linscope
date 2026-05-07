@@ -1,15 +1,16 @@
-name: ✨ Feature Request
-about: Suggest a feature
-title: "[FEATURE] "
+---
+name: Feature request
+about: Suggest an idea for linscope
+title: '[FEATURE] '
 labels: enhancement
+assignees: ''
+---
 
-🎯 Problem
-...
+### Is your feature request related to a problem?
+Describe.
 
-💡 Solution
-...
+### Describe the solution you'd like
+Clear description.
 
-🔬 Alternatives
-...
-
-📊 Impact
+### Additional context
+Add any mockups or examples.

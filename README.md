@@ -32,89 +32,57 @@ Instead of drowning in logs, you see:
 
 > Built for SOC analysts, pentesters, and security researchers.
 
----
 
-## ⚡ Performance (v0.2.0)
-
-Now optimized for **extreme scale**:
-
-| Metric | Performance | Improvement |
-|--------|-------------|-------------|
-| **Max Events/sec** | 2000+ | 4x faster |
-| **Live Graph FPS** | 45-60 | 3-4x smoother |
-| **Memory Usage** | 45-100MB | 2.5-6x efficient |
-| **DOM Nodes** | 50-100 | 10-20x leaner |
-| **Render Time** | 2-8ms | 2-8x faster |
-
-✨ **New Features:**
-- Event batching (50ms intervals)
-- Virtual scrolling (O(1) rendering)
-- Web Worker physics (non-blocking)
-- Real-time performance metrics
-- Graceful performance mode
-
----
 
 ## 🏗️ Architecture
 
-eBPF Collector → FastAPI Backend → WebSocket → React Frontend  
-↓ ↓ ↓ ↓  
-Kernel Event Stream → Processing → Real-time Updates → Live Graph
+```text
+eBPF Collector  →  FastAPI Backend  →  WebSocket  →  React Frontend
+      ↓                 ↓                 ↓                ↓
+Kernel Event      Real-time          Live Graph      Visualization
+   Stream         Processing           Updates
+      ↓
+Detection Engine  →  Replay Engine  →  AI Assistant
+```
 
 ---
 
 ## 🚀 Quick Start
 
-### Prerequisites
+## 🚀 Quick Start
 
-- Linux (Ubuntu 22.04+, Mint 21+, or any distribution with eBPF support)
-- Python 3.10+
-- Node.js 18+
+### Prerequisites
+- Linux (Ubuntu 22.04+, Mint 21+)
+- Python 3.10+, Node.js 18+
 - Root access (for eBPF collector)
 
 ### Installation
-
 ```bash
-# Clone the repository
 git clone https://github.com/ogtamimi/linscope.git
 cd linscope
-
-# Run the installation script
 chmod +x scripts/install.sh
 ./scripts/install.sh
 ```
 
-### Running LINSCOPE
+### Running linscope
 
-#### Terminal 1 - Backend
+**Terminal 1 – Backend:**
 ```bash
 source venv/bin/activate
-uvicorn backend.main:app --reload --port 8000
+cd backend && python -m uvicorn main:app --reload --port 8000
 ```
 
-#### Terminal 2 - Collector (requires root)
+**Terminal 2 – Collector (requires root):**
 ```bash
-# Real eBPF monitoring
-sudo PYTHONPATH=/usr/lib/python3/dist-packages python3 collector/main.py
-
-# OR demo mode (no root required)
-python3 collector/mock_collector.py
-
-# Generate high-volume test data (for performance testing)
-python3 collector/mock_collector.py --rate 2000  # 2000 events/sec
+cd collector && sudo python3 main.py
 ```
 
-#### Terminal 3 - Frontend
+**Terminal 3 – Frontend:**
 ```bash
-cd frontend
-npm install
-npm run dev
+cd frontend && npm run dev
 ```
 
-Open:
-```
-http://localhost:5173
-```
+Open http://localhost:5173 🔭
 
 **Performance Monitoring:**
 - Click "📊 METRICS ON" in sidebar to see real-time performance dashboard
@@ -122,22 +90,6 @@ http://localhost:5173
 
 ---
 
-## 📸 Screenshot
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│  🔭 LINSCOPE                                    processes 42    │
-│  v0.2.0 — optimized behavioral observability   connections 15   │
-│  45-60 FPS | 2000+ events/sec                    events/s 1250  │
-├──────────────┬─────────────────────────────────┬────────────────┤
-│  Live Graph  │      ●    ●                     │  LIVE EVENTS   │
-│  Network Map │        ●       ●                │  exec bash     │
-│  Timeline    │    ●         ●                  │  connect curl  │
-│  Incidents   │          ●                      │  exec python3  │
-│  AI Analyst  │       ●    ●                    │  connect wget  │
-│  📊 METRICS  │ FPS: 52 | Events: 1250/s       │  [Auto scroll]  │
-└──────────────┴─────────────────────────────────┴────────────────┘
-```
 
 ---
 
@@ -158,80 +110,42 @@ http://localhost:5173
 
 ---
 
-## 🗺️ Roadmap
+## 🎯 Features
 
-- Project structure & GitHub setup
-- eBPF process collector
-- FastAPI backend with WebSocket
-- React frontend with live graph
-- Mock collector for demo
-- Network monitor (kernel 6.17+ fix)
-- Behavioral detection engine
-- Attack timeline reconstruction
-- Ollama AI integration
-- Incident summarization
+| Feature | Status | Description |
+| :--- | :--- | :--- |
+| Process Monitoring | ✅ | eBPF exec/fork/exit |
+| Network Monitoring | ✅ | bpftrace + /proc fallback |
+| File Syscall Monitoring | ✅ | open/unlink (experimental) |
+| Live Graph | ✅ | 2000+ events/sec, 45-60 FPS |
+| Timeline View | ✅ | Zoom, search, PID filter |
+| Replay Engine | ✅ | Speed control, seek |
+| Detection Engine | ✅ | MITRE ATT&CK rules |
+| Alerts Panel | ✅ | Real‑time security alerts |
+| AI Analyst | ✅ | Ollama + Groq support |
+| Virtual Scrolling | ✅ | O(1) DOM rendering |
 
+## 📊 Performance (v0.3.0)
 
+| Metric | Before | After | Improvement |
+| :--- | :--- | :--- | :--- |
+| Max Events/sec | 500 | 2000+ | 4x |
+| FPS | 15-20 | 45-60 | 3x |
+| Memory usage | 250-300MB | 45-100MB | 3x |
+| DOM nodes | 1000+ | 50-150 | 10x |
 
+## 🔌 API Endpoints
 
-## 🚀 What's New in v0.2.0
-
-### Performance Improvements
-- ✨ **Event Batching** — 50x fewer state updates (50ms batches)
-- ✨ **Virtual Scrolling** — O(1) rendering complexity (50 items DOM, 1000 in memory)
-- ✨ **Web Workers** — Physics calculations off main thread (non-blocking)
-- ✨ **Node Pooling** — Reused objects, fixed memory allocation
-- ✨ **Throttled Rendering** — 30fps target (no wasted cycles)
-- ✨ **Rate Limiting** — Token bucket algorithm (predictable throughput)
-
-### New Components
-- `LiveGraphOptimized.tsx` — Canvas graph with Web Worker physics
-- `VirtualEventFeed.tsx` — Virtual scrolling event list
-- `PerformanceMonitor.tsx` — Real-time metrics dashboard
-- `useWebSocketOptimized.ts` — Event batching & queue management
-- `graphWorker.ts` — Web Worker for physics calculations
-
-### New Features
-- 📊 **Performance Monitor** — Real-time FPS, memory, event rate tracking
-- ⚡ **Performance Mode** — Toggle for high-load scenarios
-- 📈 **Metrics Dashboard** — Visual performance indicators
-- 🔄 **Event Batching** — Automatic batching every 50ms
-- 🎯 **Dropped Event Tracking** — Monitor queue overflow
-
-### Backwards Compatibility
-✅ Fully backwards compatible - old components still available as fallback
-✅ New frontend works with old backend
-✅ No breaking API changes
-
----
-
-**Backend**
-- Python 3.10+
-- FastAPI with async/await
-- WebSockets with event batching
-- eBPF (BCC)
-- Uvicorn
-- Rate limiting (token bucket)
-
-**Frontend**
-- React 18 with hooks
-- TypeScript
-- Canvas API with requestAnimationFrame
-- Web Workers for physics
-- Virtual scrolling (React)
-- TailwindCSS
-- Vite
-
-**Performance Features** ✨
-- Event batching (50ms intervals)
-- Web Worker thread pool
-- Object pooling (node reuse)
-- Virtual scrolling (O(1) complexity)
-- Throttled rendering (30fps)
-- Real-time metrics monitoring
-
-**Storage**
-- SQLite
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| GET | /api/events | Get stored events |
+| GET | /api/stats | System statistics |
+| GET | /api/process-tree | Full process tree |
+| GET | /api/correlate/{pid} | Correlated events for a PID |
+| POST | /api/ai/chat | AI chat (streaming) |
+| POST | /api/ai/analyze-incident | Incident analysis |
+| WebSocket | /ws | Real‑time event stream |
+| WebSocket | /ws/alerts | Alert stream |
 
 ---
 
@@ -239,58 +153,82 @@ http://localhost:5173
 
 ```
 linscope/
-├── collector/
-│   ├── src/
-│   │   ├── process_monitor.py   # eBPF process tracking
-│   │   ├── network_monitor.py   # eBPF network tracking
-│   │   └── event_emitter.py     # HTTP event sender
-│   ├── main.py                   # Real eBPF collector
-│   └── mock_collector.py         # Demo collector (no root)
+├── README.md                          # Updated for v0.3.0-alpha
+├── LICENSE                            # Apache 2.0
+├── .gitignore
+├── .env.example
+│
 ├── backend/
-│   └── main.py                   # FastAPI + WebSocket (optimized)
-├── frontend/
+│   ├── main.py                        # FastAPI with WebSocket, batching, AI endpoints
+│   ├── detection.py                   # Advanced detection engine (MITRE ATT&CK rules)
+│   ├── ai_service.py                  # Unified Ollama + Groq AI interface
+│   ├── requirements.txt               # Python dependencies
+│   └── __pycache__/
+│
+├── collector/
+│   ├── main.py                        # Entry point (process + network)
+│   ├── mock_collector.py              # Synthetic events for testing
 │   ├── src/
-│   │   ├── components/
-│   │   │   ├── LiveGraphOptimized.tsx      # ✨ Optimized graph
-│   │   │   ├── VirtualEventFeed.tsx        # ✨ Virtual scrolling
-│   │   │   ├── PerformanceMonitor.tsx      # ✨ Metrics dashboard
-│   │   │   └── [other components]
+│   │   ├── __init__.py
+│   │   ├── process_monitor.py         # eBPF process tracking (exec/exit)
+│   │   ├── network_monitor_v2.py      # bpftrace + /proc/net/tcp fallback
+│   │   ├── event_emitter.py           # HTTP batch sender to backend
+│   │   └── file_monitor.py            # (optional) syscall tracking (open/unlink)
+│   └── __pycache__/
+│
+├── frontend/
+│   ├── package.json                   # version 0.3.0-alpha
+│   ├── vite.config.ts                 # Vite + Tailwind + optimizations
+│   ├── index.html
+│   ├── src/
+│   │   ├── App.tsx                    # Main layout with tabs (Live, Timeline, Replay, Alerts, AI)
+│   │   ├── main.tsx
+│   │   ├── index.css                  # Tailwind + global styles
+│   │   ├── types/
+│   │   │   └── events.ts              # TypeScript interfaces (LinEvent, etc.)
 │   │   ├── hooks/
-│   │   │   ├── useWebSocketOptimized.ts    # ✨ Event batching
-│   │   │   └── useWebSocket.ts             # (fallback)
+│   │   │   ├── useWebSocketAdaptive.ts    # Batched WebSocket, queue management
+│   │   │   └── useWebSocketOptimized.ts   # Legacy fallback
+│   │   ├── components/
+│   │   │   ├── LiveGraph.tsx               # Canvas‑based dynamic graph
+│   │   │   ├── LiveGraphOptimizedHighPerf.tsx  # OffscreenCanvas + Worker
+│   │   │   ├── TopBar.tsx                  # Metrics + quality selector
+│   │   │   ├── EventFeed.tsx               # Real‑time event list
+│   │   │   ├── VirtualEventFeed.tsx        # Virtual scrolling feed
+│   │   │   ├── TimelineView.tsx            # Zoomable event timeline
+│   │   │   ├── ReplayView.tsx              # Replay with speed control
+│   │   │   ├── AlertsPanel.tsx             # Live security alerts
+│   │   │   ├── AIAnalyst.tsx               # Chat interface (Ollama/Groq)
+│   │   │   ├── NetworkMap.tsx              # Basic network connections map
+│   │   │   └── PerformanceMonitor.tsx      # FPS, memory, event rate dashboard
 │   │   ├── workers/
-│   │   │   └── graphWorker.ts              # ✨ Physics calculations
-│   │   ├── utils/
-│   │   │   ├── performance.ts              # ✨ Optimization utilities
-│   │   │   └── worker.ts                   # ✨ Worker pool
-│   │   └── types/
-│   ├── package.json
-│   └── vite.config.ts
-├── docs/
+│   │   │   └── graphRenderWorker.ts        # Web Worker for physics offload
+│   │   └── utils/
+│   │       ├── performance.ts              # Throttle, batching, pooling
+│   │       └── worker.ts                   # Worker pool utilities
+│   └── node_modules/
+│
 ├── scripts/
-│   └── install.sh
+│   ├── install.sh                     # System dependencies + Python venv
+│   └── setup_ebpf.sh                  # eBPF helpers (bcc, bpftrace)
+│
 |
-├── README.md
-└── LICENSE
+│
+├── .github/
+│   ├── SECURITY.md                    # Updated for v0.3.0
+│   ├── ISSUE_TEMPLATE/
+│   │   ├── bug_report.md
+│   │   ├── feature_request.md
+│   │   └── config.yml
+│   ├── PULL_REQUEST_TEMPLATE.md
+│   └── FUNDING.yml
+│
+├── venv/                              # Python virtual environment
+└── tests/                             # Placeholder for future tests
 ```
 
 ---
 
-## � Testing & Performance
-
-### Performance Testing
-
-Test linscope under high-load conditions:
-
-```bash
-# Generate 2000 events/second
-python3 collector/mock_collector.py --rate 2000
-
-# Monitor in real-time
-# 1. Open http://localhost:5173
-# 2. Click "📊 METRICS ON" in sidebar
-# 3. Watch FPS, memory, event rate in dashboard
-```
 
 ### Expected Performance
 
@@ -302,53 +240,17 @@ python3 collector/mock_collector.py --rate 2000
 | **Render Time** | 2-8ms | ✅ Fast |
 | **DOM Nodes** | 50-100 | ✅ Optimized |
 
-### Troubleshooting
-
-- **Low FPS?** Toggle "⚡ PERF" mode in Live Graph
-- **High memory?** Check `OPTIMIZATION_GUIDE.md` for tuning
-- **WebSocket issues?** See troubleshooting in `OPTIMIZATION_GUIDE.md`
 
 ---
 
-## �🤝 Contributing
-
-1. Fork the repository
-
-1. Create your feature branch (git checkout -b feature/amazing)
-
-1. Commit your changes (git commit -m 'Add amazing feature')
-
-1. Push to the branch (git push origin feature/amazing)
-
-1. Open a Pull Request 
-
----
+## 🤝 Contributing
+Contributions are welcome! Please read CONTRIBUTING.md.
 
 ## 📝 License
-
-Apache 2.0 License - see LICENSE file for details.
-
----
-
-## ⚠️ Known Issues
-
-- Kernel 6.17+ network limitation
-- Root required for full monitoring
-- High event load may affect performance
-
----
+Apache 2.0 – see LICENSE.
 
 ## 🙏 Acknowledgments
+- eBPF & BCC communities
+- FastAPI & React ecosystems
 
-- Linux eBPF community
-- BCC project
-- FastAPI
-- React ecosystem
-
----
-
-<div align="center">
-
-**Built with ❤️ for the blue team**
-
-</div>
+<div align="center"> <sub>Built with ❤️ for the blue team</sub> </div>

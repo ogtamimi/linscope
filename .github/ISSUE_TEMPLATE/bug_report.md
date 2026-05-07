@@ -1,27 +1,24 @@
-name: 🐛 Bug Report
-about: Report a bug
-title: "[BUG] "
+---
+name: Bug report
+about: Create a report to help us improve
+title: '[BUG] '
 labels: bug
+assignees: ''
+---
 
-🐛 Description
-...
+### Describe the bug
+A clear description.
 
-🔄 Steps to Reproduce
-1.
-2.
-3.
+### To Reproduce
+Steps to reproduce.
 
-✅ Expected Behavior
-...
+### Expected behavior
+What you expected.
 
-💻 Environment
-OS:
-Kernel:
-Python:
-Node:
-Version:
+### Environment
+- **OS and kernel:** `uname -a`
+- **linscope version:** 
+- **Python version:** 
 
-📋 Logs
-
-paste logs here
-
+### Additional context
+Add any other context here.
