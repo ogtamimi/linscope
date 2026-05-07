@@ -49,8 +49,6 @@ Detection Engine  →  Replay Engine  →  AI Assistant
 
 ## 🚀 Quick Start
 
-## 🚀 Quick Start
-
 ### Prerequisites
 - Linux (Ubuntu 22.04+, Mint 21+)
 - Python 3.10+, Node.js 18+
@@ -91,24 +89,6 @@ Open http://localhost:5173 🔭
 ---
 
 
----
-
-## 🎯 Features
-
-| Feature | Status | Description |
-|--------|--------|-------------|
-| Process Monitoring | ✅ | eBPF exec/fork/exit tracking |
-| Network Monitoring | ⚠️ | TCP connection tracking |
-| Live Graph | ✅ | **Optimized** canvas rendering (45-60 FPS) |
-| Event Feed | ✅ | **Virtual scrolling** (O(1) complexity) |
-| WebSocket Streaming | ✅ | **Batched** (50ms intervals) |
-| Performance Monitor | ✅ | **NEW** - Real-time metrics dashboard |
-| Attack Timeline | 🔄 | Incident reconstruction |
-| AI Assistant | 🔄 | Local LLM integration |
-| Replay Engine | 🔄 | System activity replay |
-| High-Load Support | ✅ | **NEW** - 2000+ events/sec handling |
-
----
 
 ## 🎯 Features
 
