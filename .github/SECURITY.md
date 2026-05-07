@@ -12,7 +12,7 @@
 
 Do NOT create a public GitHub issue. Instead, please use one of the following methods:
 1. Create a private security advisory on GitHub
-2. Email (placeholder): security@linscope.dev
+2. Email : ogttamimi@gmail.com
 
 You should receive a response within 48 hours.
 
