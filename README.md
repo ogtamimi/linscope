@@ -12,7 +12,7 @@
 [![Python](https://img.shields.io/badge/python-3.10+-blue.svg)]()
 [![React](https://img.shields.io/badge/react-18-blue.svg)]()
 [![Performance](https://img.shields.io/badge/performance-2000%2B%20eps-brightgreen.svg)]()
-[![FPS](https://img.shields.io/badge/fps-45--60-brightgreen.svg)]()
+[![FPS](https://img.shields.io/badge/fps-45--100-brightgreen.svg)]()
 
 </div>
 
@@ -164,7 +164,7 @@ Open http://localhost:3000 🔭
 | Metric | Before | After | Improvement |
 | :--- | :--- | :--- | :--- |
 | Max Events/sec | 500 | 2000+ | 4x |
-| FPS | 15-20 | 45-60 | 3x |
+| FPS | 15-20 | 45-100 | 3x |
 | Memory usage | 250-300MB | 45-100MB | 3x |
 | DOM nodes | 1000+ | 50-150 | 10x |
 
@@ -282,11 +282,15 @@ linscope/
 
 ## 🖼️ Screenshots
 
-<img src="docs/pics/1.png" alt="Linscope screenshot 1" width="45%" />
-<img src="docs/pics/2.png" alt="Linscope screenshot 2" width="45%" />
+<div align="center">
+  <img src="docs/pics/1.png" alt="Linscope screenshot 1" width="100%" style="margin: 8px;" />
+  <img src="docs/pics/2.png" alt="Linscope screenshot 2" width="100%" style="margin: 8px;" />
+</div>
 
-<img src="docs/pics/3.png" alt="Linscope screenshot 3" width="45%" />
-<img src="docs/pics/4.png" alt="Linscope screenshot 4" width="45%" />
+<div align="center">
+  <img src="docs/pics/3.png" alt="Linscope screenshot 3" width="100%" style="margin: 8px;" />
+  <img src="docs/pics/4.png" alt="Linscope screenshot 4" width="100%" style="margin: 8px;" />
+</div>
 
 ---
 
