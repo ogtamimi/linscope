@@ -60,3 +60,4 @@ logs/
 *.key
 *.pem
 *.crt
+venv/
