@@ -53,19 +53,24 @@ Detection Engine  →  Replay Engine  →  AI Assistant
 - Python 3.10+
 - Node.js 18+
 - Root access for the collector
+- eBPF dependencies: `bpfcc-tools`, `python3-bpfcc`, `linux-headers-$(uname -r)`, `bpftrace`
 - Optional: local Ollama for AI analysis
 
 ### Install required packages
 
 ```bash
-cd /linscope
+cd linscope
+sudo apt update
+sudo apt install -y bpfcc-tools python3-bpfcc linux-headers-$(uname -r) bpftrace
 python3 -m venv venv
 source venv/bin/activate
-pip install fastapi uvicorn httpx pydantic
+pip install -r requirements.txt
 ```
 
+> `npm install` is independent of the Python virtual environment.
+
 ```bash
-cd /linscope/frontend
+cd linscope/frontend
 npm install
 ```
 
@@ -87,23 +92,32 @@ ollama serve --port 11434
 By default, linscope will use `http://localhost:11434` for Ollama.
 You can override this with `OLLAMA_URL=http://localhost:11434` in your environment.
 
+### Optional: VirusTotal integration
+If you want VirusTotal IOC lookups, run:
+
+```bash
+bash setup-virustotal.sh
+```
+
+Then set your `VIRUSTOTAL_API_KEY` in `.env.example` or a local `.env` file.
+
 ### Running linscope
 
 **Terminal 1 — Backend**
 ```bash
-cd /linscope/backend
+cd linscope/backend
 python3 -m uvicorn main:app --reload --port 8000
 ```
 
 **Terminal 2 — Collector**
 ```bash
-cd /linscope/collector
+cd linscope/collector
 sudo PYTHONPATH=/usr/lib/python3/dist-packages python3 main.py
 ```
 
 **Terminal 3 — Frontend**
 ```bash
-cd /linscope/frontend
+cd linscope/frontend
 npm run dev
 ```
 
@@ -161,7 +175,7 @@ linscope/
 ├── .gitignore                    # Files/folders ignored by Git
 ├── .env.example                  # Example environment variables for local config
 ├── setup-virustotal.sh           # Helper script to configure VirusTotal integration  
-|   
+├── requirements.txt   
 |
 ├── backend/                      # FastAPI backend and AI integration
 |   |
