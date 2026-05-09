@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 import threading, signal, sys, os
-
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from src.process_monitor import ProcessMonitor
-from src.network_monitor_v2 import NetworkMonitorV2
+from src.network_monitor_v2 import NetworkMonitorV2   # stable, no file_monitor
 from src.event_emitter import EventEmitter
 
 def main():
@@ -19,10 +18,10 @@ def main():
     ██║     ██║██║╚██╗██║╚════██║██║     ██║   ██║██╔═══╝ ██╔══╝
     ███████╗██║██║ ╚████║███████║╚██████╗╚██████╔╝██║     ███████╗
     ╚══════╝╚═╝╚═╝  ╚═══╝╚══════╝ ╚═════╝ ╚═════╝ ╚═╝     ╚══════╝
-    v0.3.0-alpha — Process + Network Monitoring (stable)
+    v1.0.0 — Process + Network Monitoring (stable, file_monitor disabled)
     """)
 
-    emitter = EventEmitter()
+    emitter = EventEmitter(backend_url="http://localhost:8000")
     emitter.start()
 
     def shutdown(sig, frame):
@@ -33,17 +32,15 @@ def main():
     signal.signal(signal.SIGINT, shutdown)
     signal.signal(signal.SIGTERM, shutdown)
 
-    proc_mon = ProcessMonitor(emitter.emit)
-    net_mon = NetworkMonitorV2(emitter.emit)
-    
-    t1 = threading.Thread(target=proc_mon.start, daemon=True)
-    t2 = threading.Thread(target=net_mon.start, daemon=True)
+    # Only stable monitors
+    t1 = threading.Thread(target=ProcessMonitor(emitter.emit).start, daemon=True)
+    t2 = threading.Thread(target=NetworkMonitorV2(emitter.emit).start, daemon=True)
+
     t1.start()
     t2.start()
-    
-    print("[linscope] Process + Network monitors running (file monitor disabled for stability).")
+
+    print("[linscope] Process + Network monitors running. (file_monitor disabled for stability)")
     print("Press Ctrl+C to stop.\n")
-    
     t1.join()
     t2.join()
 

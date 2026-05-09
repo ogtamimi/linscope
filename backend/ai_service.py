@@ -36,7 +36,9 @@ Be concise, technical, and focus on actionable insights. When analyzing events, 
         prompt: str,
         context: Optional[List[Dict]] = None,
         provider: str = DEFAULT_PROVIDER,
-        stream: bool = True
+        stream: bool = True,
+        model: Optional[str] = None,
+        ollama_base_url: Optional[str] = None
     ) -> AsyncGenerator[str, None]:
         """Generate AI response from specified provider."""
         messages = [{"role": "system", "content": self.system_context}]
@@ -45,27 +47,29 @@ Be concise, technical, and focus on actionable insights. When analyzing events, 
         messages.append({"role": "user", "content": prompt})
 
         if provider == "ollama":
-            async for chunk in self._ollama_chat(messages, stream):
+            async for chunk in self._ollama_chat(messages, stream, model, ollama_base_url):
                 if stream:
                     yield chunk
                 else:
                     yield chunk
         elif provider == "groq":
-            async for chunk in self._groq_chat(messages, stream):
+            async for chunk in self._groq_chat(messages, stream, model):
                 yield chunk
         else:
             raise ValueError(f"Unknown provider: {provider}")
 
-    async def _ollama_chat(self, messages: List[Dict], stream: bool) -> AsyncGenerator[str, None]:
+    async def _ollama_chat(self, messages: List[Dict], stream: bool, model: Optional[str] = None, ollama_base_url: Optional[str] = None) -> AsyncGenerator[str, None]:
         """Call Ollama API for chat completion."""
+        base_url = ollama_base_url or OLLAMA_BASE_URL
+        model = model or OLLAMA_LLM_MODEL
         payload = {
-            "model": OLLAMA_LLM_MODEL,
+            "model": model,
             "messages": messages,
             "stream": stream,
             "options": {"temperature": 0.7, "num_predict": 1024}
         }
         if stream:
-            async with self.client.stream("POST", f"{OLLAMA_BASE_URL}/api/chat", json=payload) as response:
+            async with self.client.stream("POST", f"{base_url}/api/chat", json=payload) as response:
                 async for line in response.aiter_lines():
                     if line.strip():
                         try:
@@ -75,15 +79,16 @@ Be concise, technical, and focus on actionable insights. When analyzing events, 
                         except json.JSONDecodeError:
                             continue
         else:
-            response = await self.client.post(f"{OLLAMA_BASE_URL}/api/chat", json=payload)
+            response = await self.client.post(f"{base_url}/api/chat", json=payload)
             data = response.json()
             yield data.get("message", {}).get("content", "")
 
-    async def _groq_chat(self, messages: List[Dict], stream: bool) -> AsyncGenerator[str, None]:
+    async def _groq_chat(self, messages: List[Dict], stream: bool, model: Optional[str] = None) -> AsyncGenerator[str, None]:
         """Call Groq API for chat completion."""
         headers = {"Authorization": f"Bearer {GROQ_API_KEY}", "Content-Type": "application/json"}
+        model = model or GROQ_MODEL
         payload = {
-            "model": GROQ_MODEL,
+            "model": model,
             "messages": messages,
             "stream": stream,
             "temperature": 0.7,
@@ -113,13 +118,13 @@ Be concise, technical, and focus on actionable insights. When analyzing events, 
         data = response.json()
         return data.get("embedding", [])
 
-    async def analyze_incident(self, events: List[Dict]) -> str:
+    async def analyze_incident(self, events: List[Dict], provider: str = None, model: str = None, ollama_base_url: str = None) -> str:
         """Generate incident analysis summary."""
         prompt = f"""Analyze the following security events and provide a concise incident summary:
 {json.dumps(events, indent=2)}
 Include: threat assessment, attack timeline, and recommended remediation."""
         full_response = ""
-        async for chunk in self.generate(prompt, stream=False):
+        async for chunk in self.generate(prompt, stream=False, provider=provider, model=model, ollama_base_url=ollama_base_url):
             full_response = chunk
         return full_response
 

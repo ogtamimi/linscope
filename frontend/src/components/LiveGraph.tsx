@@ -1,223 +1,279 @@
-import { useEffect, useRef, useCallback, useMemo } from 'react'
-import type { LinEvent } from '../types/events'
+import React, { useEffect, useRef, useCallback, useState } from 'react'
+import type { LinEvent } from '../types'
 
-const COLORS: Record<string, string> = {
-  exec: '#3fb950',
-  connect: '#58a6ff',
-  exit: '#f85149',
-  fork: '#d29922',
-  unknown: '#8b949e'
+const COLORS = {
+  exec: '#00ff88',
+  connect: '#00f0ff',
+  exit: '#ff0044',
+  fork: '#ffb800',
+  unknown: '#64748b',
+}
+const MAX_NODES = 35
+const MAX_EDGES = 50
+const QUALITY_LEVELS = { high: 1, medium: 0.7, low: 0.4 }
+
+interface LiveGraphProps {
+  events?: LinEvent[]
 }
 
 interface Node {
   id: string
-  x: number; y: number
-  vx: number; vy: number
-  proc: string
+  x: number
+  y: number
+  vx: number
+  vy: number
+  label: string
   color: string
-  r: number
+  size: number
   alpha: number
   age: number
   maxAge: number
 }
 
 interface Edge {
-  from: Node; to: Node
-  alpha: number; age: number; maxAge: number
+  fromId: string
+  toId: string
+  alpha: number
 }
 
-export function LiveGraph({ events }: { events: LinEvent[] }) {
+export function LiveGraph({ events = [] }: LiveGraphProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const [quality, setQuality] = useState<'high' | 'medium' | 'low'>('high')
+  const [perfMode, setPerfMode] = useState(false)
+  const [fps, setFps] = useState(60)
+  const frameCountRef = useRef(0)
+  const lastFpsCheck = useRef(performance.now())
+  const lastEventCount = useRef(0)
+  
   const nodesRef = useRef<Node[]>([])
   const edgesRef = useRef<Edge[]>([])
-  const lastCount = useRef(0)
-  const animRef = useRef<number>(0)
-  const frameRef = useRef(0)
+  const anomalyScoresRef = useRef<Record<string, number>>({})
+  const workerRef = useRef<Worker | null>(null)
 
-  const spawnNode = useCallback((event: LinEvent) => {
-    const canvas = canvasRef.current
-    if (!canvas) return
-    const W = canvas.width, H = canvas.height
+  useEffect(() => {
+    // Vite handles this URL pattern for workers
+    workerRef.current = new Worker(new URL('../workers/anomalyDetection.ts', import.meta.url), { type: 'module' });
+    
+    workerRef.current.onmessage = (e) => {
+      if (e.data.type === 'scores') {
+        anomalyScoresRef.current = e.data.data;
+      }
+    };
+
+    return () => workerRef.current?.terminate();
+  }, []);
+
+  const spawnNode = useCallback((event: LinEvent, width: number, height: number) => {
     const angle = Math.random() * Math.PI * 2
-    const r = 100 + Math.random() * Math.min(W, H) * 0.3
+    const radius = 50 + Math.random() * 100
     
-    const node: Node = {
-      id: event.id,
-      x: W / 2 + Math.cos(angle) * r + (Math.random() - 0.5) * 80,
-      y: H / 2 + Math.sin(angle) * r + (Math.random() - 0.5) * 80,
-      vx: (Math.random() - 0.5) * 0.8,
-      vy: (Math.random() - 0.5) * 0.8,
-      proc: event.process.slice(0, 12),
-      color: COLORS[event.event] ?? COLORS.unknown,
-      r: event.event === 'exec' ? 12 : event.event === 'connect' ? 10 : 8,
-      alpha: 0,
+    const newNode: Node = {
+      id: event.pid?.toString() || event.id || Math.random().toString(),
+      x: width / 2 + Math.cos(angle) * radius,
+      y: height / 2 + Math.sin(angle) * radius,
+      vx: (Math.random() - 0.5) * 2,
+      vy: (Math.random() - 0.5) * 2,
+      label: event.process || 'unknown',
+      color: COLORS[event.event as keyof typeof COLORS] || COLORS.unknown,
+      size: event.event === 'exec' ? 8 : 5,
+      alpha: 1,
       age: 0,
-      maxAge: 250 + Math.floor(Math.random() * 200)
+      maxAge: 200 + Math.random() * 100
     }
-    
-    const nodes = nodesRef.current
-    if (nodes.length > 0) {
-      const parent = nodes[Math.floor(Math.random() * Math.min(nodes.length, 6))]
-      edgesRef.current.push({ from: parent, to: node, alpha: 1, age: 0, maxAge: node.maxAge })
+
+    if (nodesRef.current.length > 0) {
+      const parent = nodesRef.current.find(n => n.id === event.ppid?.toString()) || 
+                     nodesRef.current[Math.floor(Math.random() * Math.min(nodesRef.current.length, 5))]
+      edgesRef.current.push({
+        fromId: parent.id,
+        toId: newNode.id,
+        alpha: 0.5
+      })
     }
-    nodes.push(node)
-    
-    if (nodes.length > 150) nodes.splice(0, nodes.length - 150)
-    if (edgesRef.current.length > 200) edgesRef.current.splice(0, edgesRef.current.length - 200)
+
+    nodesRef.current.push(newNode)
+    if (nodesRef.current.length > MAX_NODES) nodesRef.current.shift()
+    if (edgesRef.current.length > MAX_EDGES) edgesRef.current.shift()
   }, [])
 
   useEffect(() => {
-    const newEvents = events.slice(lastCount.current)
-    lastCount.current = events.length
-    if (newEvents.length > 30) {
-      newEvents.slice(-30).forEach(spawnNode)
-    } else {
-      newEvents.forEach(spawnNode)
+    const canvas = canvasRef.current
+    if (!canvas) return
+
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+
+    const dpr = window.devicePixelRatio || 1
+    
+    const resizeObserver = new ResizeObserver(entries => {
+      for (const entry of entries) {
+        const { width, height } = entry.contentRect
+        canvas.width = width * dpr
+        canvas.height = height * dpr
+      }
+    })
+    resizeObserver.observe(canvas.parentElement || canvas)
+
+    const animate = (time: number) => {
+      frameCountRef.current++
+      
+      const W = canvas.width / dpr
+      const H = canvas.height / dpr
+      
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+      ctx.fillStyle = '#12151F'
+      ctx.fillRect(0, 0, W, H)
+      
+      // Update Physics
+      nodesRef.current.forEach(node => {
+        const dx = W / 2 - node.x
+        const dy = H / 2 - node.y
+        node.vx += dx * 0.0001
+        node.vy += dy * 0.0001
+        
+        node.x += node.vx
+        node.y += node.vy
+        node.vx *= 0.98
+        node.vy *= 0.98
+        
+        node.age++
+        if (node.age > node.maxAge) {
+           node.alpha *= 0.95
+        }
+      })
+      
+      // Filter edges
+      const nodeIds = new Set(nodesRef.current.map(n => n.id))
+      edgesRef.current = edgesRef.current.filter(e => nodeIds.has(e.fromId) && nodeIds.has(e.toId))
+
+      // Draw Edges
+      edgesRef.current.forEach(edge => {
+        const from = nodesRef.current.find(n => n.id === edge.fromId)
+        const to = nodesRef.current.find(n => n.id === edge.toId)
+        if (from && to) {
+          const fromScore = anomalyScoresRef.current[from.id] || 0;
+          const toScore = anomalyScoresRef.current[to.id] || 0;
+          const maxScore = Math.max(fromScore, toScore);
+          
+          const isSuspicious = maxScore > 70;
+          
+          ctx.beginPath()
+          if (isSuspicious) {
+            ctx.setLineDash([5, 5]);
+            ctx.lineDashOffset = -time / 50;
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = `rgba(239, 68, 68, ${edge.alpha * from.alpha * to.alpha * 0.6})`;
+          } else {
+            ctx.setLineDash([]);
+            ctx.lineWidth = 1;
+            ctx.strokeStyle = `rgba(255, 255, 255, ${edge.alpha * from.alpha * to.alpha * 0.1})`;
+          }
+          
+          ctx.moveTo(from.x, from.y)
+          ctx.lineTo(to.x, to.y)
+          ctx.stroke()
+        }
+      })
+      ctx.setLineDash([]);
+
+      // Draw Nodes
+      nodesRef.current.forEach(node => {
+        if (node.alpha < 0.01) return
+        
+        const score = anomalyScoresRef.current[node.id] || 0;
+        let color = node.color;
+        
+        if (score > 70) color = '#ef4444'; // Red
+        else if (score > 30) color = '#eab308'; // Yellow
+        else color = '#22c55e'; // Green (override base color for consistency with anomaly view)
+        
+        // Pulsing glow for red nodes
+        if (score > 70) {
+          const pulse = (Math.sin(time / 200) + 1) / 2;
+          ctx.shadowBlur = 15 * pulse;
+          ctx.shadowColor = '#ef4444';
+        } else {
+          ctx.shadowBlur = 0;
+        }
+
+        ctx.fillStyle = color
+        ctx.globalAlpha = node.alpha
+        ctx.beginPath()
+        ctx.arc(node.x, node.y, node.size + (score > 70 ? 2 : 0), 0, Math.PI * 2)
+        ctx.fill()
+        
+        if (node.alpha > 0.5) {
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.4)'
+          ctx.font = '10px monospace'
+          ctx.textAlign = 'center'
+          ctx.fillText(`${node.label} [${Math.round(score)}]`, node.x, node.y + node.size + 15)
+        }
+        ctx.shadowBlur = 0;
+      })
+      ctx.globalAlpha = 1
+
+      requestAnimationFrame(animate)
+    }
+    const animId = requestAnimationFrame(animate)
+
+    const interval = setInterval(() => {
+      const now = performance.now()
+      const elapsed = now - lastFpsCheck.current
+      const currentFps = (frameCountRef.current / elapsed) * 1000
+      frameCountRef.current = 0
+      lastFpsCheck.current = now
+      setFps(Math.round(currentFps))
+
+      if (currentFps < 15) setQuality('low')
+      else if (currentFps < 30) setQuality('medium')
+      else setQuality('high')
+    }, 2000)
+
+    return () => {
+      resizeObserver.disconnect()
+      cancelAnimationFrame(animId)
+      clearInterval(interval)
+    }
+  }, [])
+
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+
+    if (events.length > lastEventCount.current) {
+       const newEvents = events.slice(lastEventCount.current)
+       lastEventCount.current = events.length
+       
+       // Send new events to worker
+       workerRef.current?.postMessage({ type: 'events', data: newEvents });
+
+       const W = canvas.clientWidth || 800
+       const H = canvas.clientHeight || 600
+       newEvents.slice(-8).forEach(e => spawnNode(e, W, H))
     }
   }, [events, spawnNode])
 
-  useEffect(() => {
-    const canvas = canvasRef.current
-    if (!canvas) return
-    const ctx = canvas.getContext('2d')!
+  return (
+    <div className="h-full flex flex-col bg-[#12151F] relative">
+      <div className="absolute top-4 right-4 z-10 flex gap-2">
+        <button
+          onClick={() => setPerfMode(!perfMode)}
+          className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all border ${
+            perfMode
+              ? 'bg-[#00F0FF]/10 border-[#00F0FF]/30 text-[#00F0FF]'
+              : 'bg-[#0B0D14]/80 border-white/5 text-white/50 hover:text-white/90 backdrop-blur-md'
+          }`}
+        >
+          PERF
+        </button>
+        <span className="px-3 py-1.5 rounded-lg text-xs font-mono font-bold bg-[#0B0D14]/80 border border-white/5 text-white/70 backdrop-blur-md shadow-lg">
+          {fps} fps
+        </span>
+      </div>
 
-    const resize = () => {
-      const area = canvas.parentElement!
-      canvas.width = area.clientWidth
-      canvas.height = area.clientHeight
-    }
-    resize()
-    const ro = new ResizeObserver(resize)
-    ro.observe(canvas.parentElement!)
-
-    const draw = () => {
-      const W = canvas.width, H = canvas.height
-      if (W === 0 || H === 0) {
-        animRef.current = requestAnimationFrame(draw)
-        return
-      }
-      
-      ctx.clearRect(0, 0, W, H)
-      
-      // Animated grid
-      frameRef.current++
-      ctx.strokeStyle = `rgba(48,54,61,${0.15 + Math.sin(frameRef.current * 0.01) * 0.05})`
-      ctx.lineWidth = 0.5
-      for (let x = (frameRef.current % 40) - 40; x < W; x += 40) {
-        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke()
-      }
-      for (let y = (frameRef.current % 40) - 40; y < H; y += 40) {
-        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke()
-      }
-      
-      // Draw edges
-      const edges = edgesRef.current
-      for (let i = edges.length - 1; i >= 0; i--) {
-        const e = edges[i]
-        e.age++
-        e.alpha = Math.max(0, 1 - e.age / e.maxAge)
-        if (e.alpha <= 0.02) { edges.splice(i, 1); continue }
-        
-        ctx.beginPath()
-        ctx.moveTo(e.from.x, e.from.y)
-        ctx.lineTo(e.to.x, e.to.y)
-        
-        const gradient = ctx.createLinearGradient(e.from.x, e.from.y, e.to.x, e.to.y)
-        gradient.addColorStop(0, `rgba(88,166,255,${e.alpha * 0.4})`)
-        gradient.addColorStop(1, `rgba(88,166,255,${e.alpha * 0.1})`)
-        ctx.strokeStyle = gradient
-        ctx.lineWidth = 1.5
-        ctx.stroke()
-        
-        // Particle effect on edge
-        if (Math.random() < 0.05) {
-          ctx.beginPath()
-          ctx.arc(e.to.x, e.to.y, 2, 0, Math.PI * 2)
-          ctx.fillStyle = `rgba(88,166,255,${e.alpha * 0.8})`
-          ctx.fill()
-        }
-      }
-      
-      // Draw nodes
-      const nodes = nodesRef.current
-      for (let i = nodes.length - 1; i >= 0; i--) {
-        const n = nodes[i]
-        n.age++
-        n.alpha = n.age < 20 ? n.age / 20 : Math.max(0, 1 - (n.age - 20) / (n.maxAge - 20))
-        if (n.alpha <= 0.02) { nodes.splice(i, 1); continue }
-        
-        n.x += n.vx
-        n.y += n.vy
-        n.vx *= 0.99
-        n.vy *= 0.99
-        
-        // Bounce off edges
-        if (n.x < n.r) { n.x = n.r; n.vx *= -0.8 }
-        if (n.x > W - n.r) { n.x = W - n.r; n.vx *= -0.8 }
-        if (n.y < n.r) { n.y = n.r; n.vy *= -0.8 }
-        if (n.y > H - n.r) { n.y = H - n.r; n.vy *= -0.8 }
-        
-        // Glow effect
-        const gradient = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, n.r * 4)
-        gradient.addColorStop(0, n.color + Math.round(n.alpha * 80).toString(16).padStart(2, '0'))
-        gradient.addColorStop(0.5, n.color + Math.round(n.alpha * 20).toString(16).padStart(2, '0'))
-        gradient.addColorStop(1, 'transparent')
-        
-        ctx.beginPath()
-        ctx.arc(n.x, n.y, n.r * 4, 0, Math.PI * 2)
-        ctx.fillStyle = gradient
-        ctx.fill()
-        
-        // Core circle
-        ctx.beginPath()
-        ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2)
-        ctx.fillStyle = n.color + Math.round(n.alpha * 200).toString(16).padStart(2, '0')
-        ctx.fill()
-        
-        // Inner highlight
-        ctx.beginPath()
-        ctx.arc(n.x - n.r * 0.3, n.y - n.r * 0.3, n.r * 0.3, 0, Math.PI * 2)
-        ctx.fillStyle = `rgba(255,255,255,${n.alpha * 0.3})`
-        ctx.fill()
-        
-        ctx.strokeStyle = `rgba(255,255,255,${n.alpha * 0.15})`
-        ctx.lineWidth = 1
-        ctx.stroke()
-        
-        // Label
-        if (n.alpha > 0.4) {
-          ctx.font = `bold ${9 + Math.floor(n.alpha * 3)}px monospace`
-          ctx.fillStyle = `rgba(230,237,243,${n.alpha * 0.9})`
-          ctx.textAlign = 'center'
-          ctx.shadowBlur = 4
-          ctx.shadowColor = n.color
-          ctx.fillText(n.proc, n.x, n.y + n.r + 14)
-          ctx.shadowBlur = 0
-        }
-      }
-      
-      // Center pulse
-      const pulse = 0.5 + Math.sin(frameRef.current * 0.05) * 0.3
-      ctx.beginPath()
-      ctx.arc(W/2, H/2, 30 + 10 * pulse, 0, Math.PI * 2)
-      ctx.strokeStyle = `rgba(88,166,255,${0.1 + pulse * 0.05})`
-      ctx.lineWidth = 1
-      ctx.stroke()
-      
-      ctx.beginPath()
-      ctx.arc(W/2, H/2, 2, 0, Math.PI * 2)
-      ctx.fillStyle = `rgba(88,166,255,${0.3 + pulse * 0.2})`
-      ctx.fill()
-      
-      animRef.current = requestAnimationFrame(draw)
-    }
-    
-    draw()
-    return () => {
-      cancelAnimationFrame(animRef.current)
-      ro.disconnect()
-    }
-  }, [])
-  
-  return <canvas ref={canvasRef} className="w-full h-full cursor-crosshair" />
+      <div className="flex-1 relative rounded-2xl overflow-hidden m-2">
+        <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" />
+      </div>
+    </div>
+  )
 }

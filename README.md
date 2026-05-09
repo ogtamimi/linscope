@@ -8,7 +8,7 @@
 
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Linux-orange.svg)]()
-[![Status](https://img.shields.io/badge/status-v0.2.0--optimized-green.svg)]()
+[![Status](https://img.shields.io/badge/status-v1.0.0-green.svg)]()
 [![Python](https://img.shields.io/badge/python-3.10+-blue.svg)]()
 [![React](https://img.shields.io/badge/react-18-blue.svg)]()
 [![Performance](https://img.shields.io/badge/performance-2000%2B%20eps-brightgreen.svg)]()
@@ -25,13 +25,12 @@ linscope transforms Linux kernel activity into a **live visual behavioral system
 Instead of drowning in logs, you see:
 
 - 🔴 **Live process graphs** — who spawned what, when, and why
-- 🌐 **Network flow maps** — real-time connection visualization  
+- 🌐 **Network flow maps** — real-time connection visualization
 - ⚡ **Behavioral anomaly detection** — not signature-based
 - 🎬 **Attack replay** — reconstruct incidents step by step
 - 🤖 **AI-powered analysis** — local LLM for incident explanation
 
 > Built for SOC analysts, pentesters, and security researchers.
-
 
 
 ## 🏗️ Architecture
@@ -51,61 +50,83 @@ Detection Engine  →  Replay Engine  →  AI Assistant
 
 ### Prerequisites
 - Linux (Ubuntu 22.04+, Mint 21+)
-- Python 3.10+, Node.js 18+
-- Root access (for eBPF collector)
+- Python 3.10+
+- Node.js 18+
+- Root access for the collector
+- Optional: local Ollama for AI analysis
 
-### Installation
+### Install required packages
+
 ```bash
-git clone https://github.com/ogtamimi/linscope.git
-cd linscope
-chmod +x scripts/install.sh
-./scripts/install.sh
+cd /linscope
+python3 -m venv venv
+source venv/bin/activate
+pip install fastapi uvicorn httpx pydantic
 ```
+
+```bash
+cd /linscope/frontend
+npm install
+```
+
+### Optional: install Ollama for local AI
+
+If you want the AI Analyst and incident analysis features to work locally, install Ollama and start its local server.
+
+```bash
+# Follow Ollama install instructions from https://ollama.com/docs/installation
+curl -fsSL https://ollama.com/install.sh | sudo bash
+```
+
+Then start the Ollama API server:
+
+```bash
+ollama serve --port 11434
+```
+
+By default, linscope will use `http://localhost:11434` for Ollama.
+You can override this with `OLLAMA_URL=http://localhost:11434` in your environment.
 
 ### Running linscope
 
-**Terminal 1 – Backend:**
+**Terminal 1 — Backend**
 ```bash
-source venv/bin/activate
-cd backend && python -m uvicorn main:app --reload --port 8000
+cd /linscope/backend
+python3 -m uvicorn main:app --reload --port 8000
 ```
 
-**Terminal 2 – Collector (requires root):**
+**Terminal 2 — Collector**
 ```bash
-cd collector && sudo python3 main.py
+cd /linscope/collector
+sudo PYTHONPATH=/usr/lib/python3/dist-packages python3 main.py
 ```
 
-**Terminal 3 – Frontend:**
+**Terminal 3 — Frontend**
 ```bash
-cd frontend && npm run dev
+cd /linscope/frontend
+npm run dev
 ```
 
-Open http://localhost:5173 🔭
-
-**Performance Monitoring:**
-- Click "📊 METRICS ON" in sidebar to see real-time performance dashboard
-- Toggle "⚡ PERF" mode in Live Graph for high-load scenarios
+Open http://localhost:3000 🔭
 
 ---
-
-
 
 ## 🎯 Features
 
 | Feature | Status | Description |
 | :--- | :--- | :--- |
-| Process Monitoring | ✅ | eBPF exec/fork/exit |
-| Network Monitoring | ✅ | bpftrace + /proc fallback |
-| File Syscall Monitoring | ✅ | open/unlink (experimental) |
-| Live Graph | ✅ | 2000+ events/sec, 45-60 FPS |
+| Process Monitoring | ✅ | eBPF process exec/fork/exit events |
+| Network Monitoring | ✅ | `NetworkMonitorV2` with `/proc/net/tcp` fallback |
+| File Syscall Monitoring | ✅ | Experimental open/unlink tracking |
+| Live Graph | ✅ | Real-time behavioral graph rendering |
 | Timeline View | ✅ | Zoom, search, PID filter |
-| Replay Engine | ✅ | Speed control, seek |
-| Detection Engine | ✅ | MITRE ATT&CK rules |
-| Alerts Panel | ✅ | Real‑time security alerts |
-| AI Analyst | ✅ | Ollama + Groq support |
+| Replay Engine | ✅ | Speed control and seek |
+| Detection Engine | ✅ | Rule-based MITRE-style detection |
+| Alerts Panel | ✅ | Real-time alert streaming |
+| AI Analyst | ✅ | Local Ollama + Groq support |
 | Virtual Scrolling | ✅ | O(1) DOM rendering |
 
-## 📊 Performance (v0.3.0)
+## 📊 Performance (v1.0.0)
 
 | Metric | Before | After | Improvement |
 | :--- | :--- | :--- | :--- |
@@ -118,13 +139,14 @@ Open http://localhost:5173 🔭
 
 | Method | Endpoint | Description |
 | :--- | :--- | :--- |
-| GET | /api/events | Get stored events |
-| GET | /api/stats | System statistics |
-| GET | /api/process-tree | Full process tree |
-| GET | /api/correlate/{pid} | Correlated events for a PID |
-| POST | /api/ai/chat | AI chat (streaming) |
+| GET | / | Health check |
+| POST | /api/events/batch | Ingest event batches from collector |
+| GET | /api/events | Fetch stored events |
+| GET | /api/alerts | Fetch alert history |
+| POST | /api/alerts/feedback | Submit alert feedback |
+| POST | /api/ai/chat | AI chat streaming |
 | POST | /api/ai/analyze-incident | Incident analysis |
-| WebSocket | /ws | Real‑time event stream |
+| WebSocket | /ws | Real-time event stream |
 | WebSocket | /ws/alerts | Alert stream |
 
 ---
@@ -133,104 +155,115 @@ Open http://localhost:5173 🔭
 
 ```
 linscope/
-├── README.md                          # Updated for v0.3.0-alpha
-├── LICENSE                            # Apache 2.0
-├── .gitignore
-├── .env.example
-│
-├── backend/
-│   ├── main.py                        # FastAPI with WebSocket, batching, AI endpoints
-│   ├── detection.py                   # Advanced detection engine (MITRE ATT&CK rules)
-│   ├── ai_service.py                  # Unified Ollama + Groq AI interface
-│   ├── requirements.txt               # Python dependencies
-│   └── __pycache__/
-│
-├── collector/
-│   ├── main.py                        # Entry point (process + network)
-│   ├── mock_collector.py              # Synthetic events for testing
-│   ├── src/
-│   │   ├── __init__.py
-│   │   ├── process_monitor.py         # eBPF process tracking (exec/exit)
-│   │   ├── network_monitor_v2.py      # bpftrace + /proc/net/tcp fallback
-│   │   ├── event_emitter.py           # HTTP batch sender to backend
-│   │   └── file_monitor.py            # (optional) syscall tracking (open/unlink)
-│   └── __pycache__/
-│
-├── frontend/
-│   ├── package.json                   # version 0.3.0-alpha
-│   ├── vite.config.ts                 # Vite + Tailwind + optimizations
-│   ├── index.html
-│   ├── src/
-│   │   ├── App.tsx                    # Main layout with tabs (Live, Timeline, Replay, Alerts, AI)
-│   │   ├── main.tsx
-│   │   ├── index.css                  # Tailwind + global styles
-│   │   ├── types/
-│   │   │   └── events.ts              # TypeScript interfaces (LinEvent, etc.)
-│   │   ├── hooks/
-│   │   │   ├── useWebSocketAdaptive.ts    # Batched WebSocket, queue management
-│   │   │   └── useWebSocketOptimized.ts   # Legacy fallback
-│   │   ├── components/
-│   │   │   ├── LiveGraph.tsx               # Canvas‑based dynamic graph
-│   │   │   ├── LiveGraphOptimizedHighPerf.tsx  # OffscreenCanvas + Worker
-│   │   │   ├── TopBar.tsx                  # Metrics + quality selector
-│   │   │   ├── EventFeed.tsx               # Real‑time event list
-│   │   │   ├── VirtualEventFeed.tsx        # Virtual scrolling feed
-│   │   │   ├── TimelineView.tsx            # Zoomable event timeline
-│   │   │   ├── ReplayView.tsx              # Replay with speed control
-│   │   │   ├── AlertsPanel.tsx             # Live security alerts
-│   │   │   ├── AIAnalyst.tsx               # Chat interface (Ollama/Groq)
-│   │   │   ├── NetworkMap.tsx              # Basic network connections map
-│   │   │   └── PerformanceMonitor.tsx      # FPS, memory, event rate dashboard
-│   │   ├── workers/
-│   │   │   └── graphRenderWorker.ts        # Web Worker for physics offload
-│   │   └── utils/
-│   │       ├── performance.ts              # Throttle, batching, pooling
-│   │       └── worker.ts                   # Worker pool utilities
-│   └── node_modules/
-│
-├── scripts/
-│   ├── install.sh                     # System dependencies + Python venv
-│   └── setup_ebpf.sh                  # eBPF helpers (bcc, bpftrace)
-│
 |
-│
-├── .github/
-│   ├── SECURITY.md                    # Updated for v0.3.0
-│   ├── ISSUE_TEMPLATE/
-│   │   ├── bug_report.md
-│   │   ├── feature_request.md
-│   │   └── config.yml
-│   ├── PULL_REQUEST_TEMPLATE.md
-│   └── FUNDING.yml
-│
-├── venv/                              # Python virtual environment
-└── tests/                             # Placeholder for future tests
+├── README.md                     # Project overview, installation, usage, and features
+├── LICENSE                       # Apache 2.0 license file
+├── .gitignore                    # Files/folders ignored by Git
+├── .env.example                  # Example environment variables for local config
+├── setup-virustotal.sh           # Helper script to configure VirusTotal integration  
+|   
+|
+├── backend/                      # FastAPI backend and AI integration
+|   |
+│   ├── main.py                        # Backend application entrypoint
+│   ├── detection_engine.py            # Detection rules and alert generation
+│   ├── ai_service.py                  # Ollama/Groq AI service integration
+│   ├── virustotal.py                  # VirusTotal IOC lookup router
+│   ├── backend.log                    # Backend runtime log file
+│   ├── linscope.db                    # Local SQLite event store
+│   ├── api/                           # Backend API package
+│   │   └── __init__.py                # API package initializer
+|   |
+|   |
+│   └── src/                           # Backend utilities and shared helpers
+│       └── __init__.py 
+|   
+|
+|
+├── collector/                    # eBPF collector and event emitter
+|   |
+│   ├── main.py                        # Collector entrypoint, starts process/network monitors
+│   ├── mock_collector.py              # Synthetic event generator for testing
+│   ├── __pycache__/                   # Compiled Python bytecode cache
+|   |
+|   |
+│   └── src/
+│       ├── event_emitter.py            # Sends event batches to backend
+│       ├── network_monitor_v2.py       # Network monitor with fallback logic
+│       ├── process_monitor.py          # Process tracking via eBPF
+│       └── file_monitor.py             # Experimental file syscall tracking
+|   
+|
+├── frontend/                     # React frontend app
+|   |
+│   ├── package.json                   # Frontend npm package manifest
+│   ├── package-lock.json              # Locked frontend dependency versions
+│   ├── tsconfig.json                  # TypeScript compiler config
+│   ├── vite.config.ts                 # Frontend build and dev server config
+│   ├── index.html                     # Browser app shell
+│   ├── metadata.json                  # App metadata and settings
+│   ├── README.md                      # Frontend-specific README
+│   ├── .gitignore                     # Frontend ignored files
+│   ├── dist/                          # Built frontend assets
+│   ├── frontend.log                   # Frontend runtime log file
+│   ├── icons/                         # UI icon assets
+│   ├── node_modules/                  # Installed npm packages
+|   |
+│   └── src/
+│       ├── App.tsx                       # Main React app component
+│       ├── main.tsx                      # React entrypoint rendering App
+│       ├── index.css                     # Global frontend styles
+│       ├── types.ts                      # Shared TypeScript types
+│       ├── vite-env.d.ts                 # Vite environment type defs
+│       ├── lib/                          # Utility modules and helpers
+│       │   └── utils.ts
+|       |
+|       |
+│       ├── workers/                      # Web Workers for performance offload
+│       │   └── anomalyDetection.ts
+|       |
+|       |
+│       ├── components/                   # UI components and panels
+│       │   ├── AIChat.tsx
+│       │   ├── AlertsPanel.tsx
+│       │   ├── AppLayout.tsx
+│       │   ├── LiveGraph.tsx
+│       │   ├── ReplayView.tsx
+│       │   ├── RightPanel.tsx
+│       │   ├── SettingsPanel.tsx
+│       │   ├── Sidebar.tsx
+│       │   ├── TimelineView.tsx
+│       │   └── VirtualEventFeed.tsx
+|       |
+│       └── hooks/                       # React hooks for state and data
+│           ├── useAlerts.ts
+│           ├── usePanelState.ts
+│           ├── useVirusTotal.ts
+│           └── useWebSocketAdaptive.ts
+| 
+├── docs/                         # Documentation and contribution guides
+└── venv/                         # Python virtual environment
 ```
 
 ---
 
+## 🌐 Notes
 
-### Expected Performance
-
-| Metric | Expected | Status |
-|--------|----------|--------|
-| **FPS** | over 30FPS | ✅ Stable |
-| **Memory** | <100MB | ✅ Efficient |
-| **Events/sec** | 2000+ | ✅ High-throughput |
-| **Render Time** | 2-8ms | ✅ Fast |
-| **DOM Nodes** | 50-100 | ✅ Optimized |
-
-
----
+- `collector/main.py` requires root and uses `PYTHONPATH=/usr/lib/python3/dist-packages` for compatibility.
+- The AI features work best with a running local Ollama server.
+- Use `.env.example` to configure optional API keys for Ollama, Groq, Gemini, and VirusTotal.
 
 ## 🤝 Contributing
-Contributions are welcome! Please read CONTRIBUTING.md.
+
+Contributions welcome! See `docs/CONTRIBUTING.md`.
 
 ## 📝 License
+
 Apache 2.0 – see LICENSE.
 
 ## 🙏 Acknowledgments
+
 - eBPF & BCC communities
 - FastAPI & React ecosystems
 
-<div align="center"> <sub>Built with ❤️ for the blue team</sub> </div>
+<div align="center"><sub>Built with ❤️ for the blue team</sub></div>

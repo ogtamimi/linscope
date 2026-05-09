@@ -57,12 +57,16 @@ class ProcessMonitor:
 
         def handle_event(cpu, data, size):
             e = bpf["events"].event(data)
+            # Skip Ollama processes
+            process_name = e.comm.decode("utf-8", errors="replace")
+            if process_name.lower() == "ollama":
+                return
             self.callback({
                 "timestamp": time.time(),
                 "pid": e.pid,
                 "ppid": e.ppid,
                 "uid": e.uid,
-                "process": e.comm.decode("utf-8", errors="replace"),
+                "process": process_name,
                 "filename": e.filename.decode("utf-8", errors="replace"),
                 "event": "exec" if e.event_type == 1 else "exit",
                 "source": "process_monitor"

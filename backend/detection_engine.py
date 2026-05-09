@@ -25,6 +25,7 @@ class Alert:
     affected_pids: List[int] = field(default_factory=list)
     score: float = 0.0
     mitre_technique: Optional[str] = None  # MITRE ATT&CK
+    iocs: List[Dict[str, str]] = field(default_factory=list)  # [{"type": "ip|domain|hash", "value": "..."}]
 
 class DetectionEngine:
     def __init__(self, event_callback: Optional[Callable] = None):
@@ -225,6 +226,20 @@ class DetectionEngine:
         return True
 
     def _create_alert(self, rule: dict, event: dict) -> Alert:
+        # Extract IOCs from event
+        iocs = []
+        
+        # Check for IP addresses
+        if event.get('dest_ip'):
+            iocs.append({'type': 'ip', 'value': event['dest_ip']})
+        
+        # Check for domains (could be in target or other fields)
+        # For now we skip domains unless they appear in a specific field
+        
+        # Check for file hashes
+        if event.get('hash'):
+            iocs.append({'type': 'hash', 'value': event['hash']})
+        
         alert = Alert(
             id=f"alert-{int(time.time()*1000)}-{hash(str(event))}",
             timestamp=event.get("timestamp", time.time()),
@@ -235,7 +250,8 @@ class DetectionEngine:
             events=[event],
             affected_pids=[event.get("pid")] if event.get("pid") else [],
             score=rule.get("score", 0),
-            mitre_technique=rule.get("mitre")
+            mitre_technique=rule.get("mitre"),
+            iocs=iocs
         )
         return alert
 

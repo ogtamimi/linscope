@@ -1,0 +1,6 @@
+{
+  "name": "Linscope v1",
+  "description": "Real-time behavioral observability and security analysis platform for Linux systems.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}

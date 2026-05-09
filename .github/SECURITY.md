@@ -4,8 +4,9 @@
 
 | Version | Supported | Security Updates |
 | :--- | :--- | :--- |
-| 0.3.x (alpha) | ✅ | Critical fixes only |
-| 0.2.x | ❌ | No longer maintained |
+| 1.0.0 | ✅ | Critical fixes only |
+| 0.3.0 (alpha) | ❌ | No longer maintained |
+| 0.2.0 | ❌ | No longer maintained |
 | main branch | ✅ | Latest security patches |
 
 ## Reporting a Vulnerability
