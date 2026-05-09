@@ -41,8 +41,27 @@ eBPF Collector  →  FastAPI Backend  →  WebSocket  →  React Frontend
 Kernel Event      Real-time          Live Graph      Visualization
    Stream         Processing           Updates
       ↓
-Detection Engine  →  Replay Engine  →  AI Assistant
+Detection Engine  →  Replay Engine  → AI Assistant
 ```
+
+---
+
+## 📦 Install from Debian package
+
+If you have the packaged installer `linscope_v1_amd64.deb`, install it with:
+
+```bash
+sudo dpkg -i linscope_v1_amd64.deb
+sudo apt-get install -f
+```
+
+After the package installs, run the application using the installed binary or service. For example:
+
+```bash
+linscope
+```
+
+If the command is not available, follow the regular source-based startup instructions in the Quick Start section below.
 
 ---
 
@@ -258,6 +277,16 @@ linscope/
 ├── docs/                         # Documentation and contribution guides
 └── venv/                         # Python virtual environment
 ```
+
+---
+
+## 🖼️ Screenshots
+
+<img src="docs/pics/1.png" alt="Linscope screenshot 1" width="45%" />
+<img src="docs/pics/2.png" alt="Linscope screenshot 2" width="45%" />
+
+<img src="docs/pics/3.png" alt="Linscope screenshot 3" width="45%" />
+<img src="docs/pics/4.png" alt="Linscope screenshot 4" width="45%" />
 
 ---
 
